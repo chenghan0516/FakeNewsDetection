@@ -191,8 +191,8 @@ class Trainer:
                     continue
 
                 # 訓練
-                predict, loss = train_core.train_iter(self.token_data_read[globals.random_index[i]][:2],
-                                                      float(self.token_data_read[globals.random_index[i]][2]))
+                predict, loss = train_core.train_iter(self.token_data_read[globals.random_index[i]][:4],
+                                                      float(self.token_data_read[globals.random_index[i]][4]))
                 train_core.push_loss(loss)
 
                 # 紀錄模型
