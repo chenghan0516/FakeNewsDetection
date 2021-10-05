@@ -22,6 +22,7 @@ def init():
                     freezed_bert_layer_num=10,
                     progressive_unfreeze=False,
                     progressive_unfreeze_step=10,
+                    max_unfreeze_layer_num=3,
 
                     evaluate_or_train=1,
                     eval_best_n=50,

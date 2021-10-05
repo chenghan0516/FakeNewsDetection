@@ -33,7 +33,10 @@ def progress(start, cur, total_len, loss, cur_read=0):
 
 
 class Config:
-    def __init__(self, subject, model_type, with_sentiment, epoch, end_warmup, lr, scheduler_gamma, save_every_pt, freezed_bert_layer_num, progressive_unfreeze, progressive_unfreeze_step, evaluate_or_train, eval_best_n, eval_waiting_queue_begin):
+    def __init__(self, subject, model_type, with_sentiment,
+                 epoch, end_warmup, lr, scheduler_gamma, save_every_pt,
+                 freezed_bert_layer_num, progressive_unfreeze, progressive_unfreeze_step, max_unfreeze_layer_num,
+                 evaluate_or_train, eval_best_n, eval_waiting_queue_begin):
 
         # 現在在執行甚麼
         self.subject = subject
@@ -52,6 +55,7 @@ class Config:
         self.freezed_bert_layer_num = freezed_bert_layer_num
         self.progressive_unfreeze = progressive_unfreeze  # 是否一層一層解凍pretrained model
         self.progressive_unfreeze_step = progressive_unfreeze_step  # 每幾epoch解凍一層模型
+        self.max_unfreeze_layer_num = max_unfreeze_layer_num  # 最多解凍幾層
 
         # evaluate用參數
         # 0 = training set, 1 = evaluating set
