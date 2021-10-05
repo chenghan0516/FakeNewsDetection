@@ -73,7 +73,7 @@ class Train_Core:
                 for param in module.parameters():
                     param.requires_grad = True
             if globals.config.progressive_unfreeze and \
-                    globals.freezed_bert_layer_num-self.freezed_bert_layer_num_temp+1 < globals.max_unfreeze_layer_num and \
+                    globals.config.freezed_bert_layer_num-self.freezed_bert_layer_num_temp+1 < globals.config.max_unfreeze_layer_num and \
                     (cur_epoch-globals.config.end_warmup+1) % globals.config.progressive_unfreeze_step == 0:
                 self.freezed_bert_layer_num_temp -= 1
 
