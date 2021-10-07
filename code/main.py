@@ -23,7 +23,7 @@ if __name__ == "__main__":
     globals.init()
 
     if do_preprocess:
-        preprocess(input)
+        preprocess()
     if do_train:
         print("Start training")
         train.train()
