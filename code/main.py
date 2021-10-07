@@ -10,12 +10,9 @@ import globals
 from util import preprocess
 import train
 
-# subject="politifact"
-subject = "gossipcop"
-path = "Bert"
 save_every_pt = 1000
-if not os.path.isdir('../{}/current'.format(path)):
-    os.makedirs('../{}/current'.format(path))
+if not os.path.isdir('../{}/current'.format(globals.config.model_type)):
+    os.makedirs('../{}/current'.format(globals.config.model_type))
 
 do_preprocess = 0
 do_train = 0
