@@ -13,8 +13,6 @@ from util import progress
 import matplotlib.pyplot as plt
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-max_sentence_num = 5000
-
 
 def create_desired_model():
     if globals.config.model_type == "Bert":
@@ -85,10 +83,10 @@ class Train_Core:
 
     def train_iter(self, X, y):
         self.optimizer.zero_grad()
-        title_token = torch.tensor(eval(X[0])[:max_sentence_num]).to(device)
-        title_mask = torch.tensor(eval(X[1])[:max_sentence_num]).to(device)
-        text_token = torch.tensor(eval(X[2])[:max_sentence_num]).to(device)
-        text_mask = torch.tensor(eval(X[3])[:max_sentence_num]).to(device)
+        title_token = torch.tensor(eval(X[0])).to(device)
+        title_mask = torch.tensor(eval(X[1])).to(device)
+        text_token = torch.tensor(eval(X[2])).to(device)
+        text_mask = torch.tensor(eval(X[3])).to(device)
         predict = self.FND_model(
             title_token, title_mask, text_token, text_mask)
         loss = self.loss_func(predict.view(1), torch.tensor([y]).to(device))
@@ -183,9 +181,9 @@ class Trainer:
             # 迭代訓練資料
             for i in train_index:
                 # 訓練BERT時跳過過長的文章
-                if epoch >= globals.config.end_warmup and len(eval(self.token_data_read[globals.random_index[i]][1])) > 200:
+                if epoch >= globals.config.end_warmup and len(eval(self.token_data_read[globals.random_index[i]][2])) > 500:
                     print("skip: {}".format(
-                        len(eval(self.token_data_read[globals.random_index[i]][1]))))
+                        len(eval(self.token_data_read[globals.random_index[i]][2]))))
                     continue
                 # 走到上次進度
                 if train_core.in_old_progress:
