@@ -1,9 +1,41 @@
-from util import Config
 import os
 import numpy as np
 import pandas as pd
 import torch
 import json
+
+
+class Config:
+    def __init__(self, subject, model_type, with_sentiment,
+                 epoch, end_warmup, lr, scheduler_gamma, save_every_pt,
+                 freezed_bert_layer_num, progressive_unfreeze, progressive_unfreeze_step, max_unfreeze_layer_num,
+                 evaluate_or_train, eval_best_n, eval_waiting_queue_begin):
+
+        # 現在在執行甚麼
+        self.subject = subject
+        self.model_type = model_type
+        self.with_sentiment = with_sentiment
+
+        # 訓練過程參數
+        self.epoch = epoch  # 訓練總epoch
+        self.end_warmup = end_warmup  # 暖身完畢的epoch
+        self.lr = lr  # learning rate
+        self.scheduler_gamma = scheduler_gamma
+        self.save_every_pt = save_every_pt  # 每幾epoch存一次模型
+
+        # pretrain model相關
+        # freeze前幾層pretrained model(bert共12層)
+        self.freezed_bert_layer_num = freezed_bert_layer_num
+        self.progressive_unfreeze = progressive_unfreeze  # 是否一層一層解凍pretrained model
+        self.progressive_unfreeze_step = progressive_unfreeze_step  # 每幾epoch解凍一層模型
+        self.max_unfreeze_layer_num = max_unfreeze_layer_num  # 最多解凍幾層
+
+        # evaluate用參數
+        # 0 = training set, 1 = evaluating set
+        self.evaluate_or_train = evaluate_or_train
+        self.eval_best_n = eval_best_n
+        self.eval_waiting_queue_begin = eval_waiting_queue_begin
+        self.eval_waiting_queue_end = self.eval_best_n+self.eval_waiting_queue_begin
 
 
 def init():
