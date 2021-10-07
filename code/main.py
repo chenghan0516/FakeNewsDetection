@@ -1,4 +1,3 @@
-from util import preprocess_input
 import os
 import pandas as pd
 import numpy as np
@@ -8,7 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
 
 import globals
-from util import preprocess, whats_running, Config
+from util import preprocess
 import train
 
 # subject="politifact"
