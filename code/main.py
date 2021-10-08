@@ -11,8 +11,6 @@ from util import preprocess
 import train
 
 save_every_pt = 1000
-if not os.path.isdir('../{}/current'.format(globals.config.model_type)):
-    os.makedirs('../{}/current'.format(globals.config.model_type))
 
 do_preprocess = 0
 do_train = 0
@@ -26,6 +24,8 @@ if __name__ == "__main__":
         preprocess()
     if do_train:
         print("Start training")
+        if not os.path.isdir('../{}/current'.format(globals.config.model_type)):
+            os.makedirs('../{}/current'.format(globals.config.model_type))
         train.train()
     if do_evaluate:
         print("evaluate")
