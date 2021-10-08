@@ -60,7 +60,7 @@ def init():
         model_type="Bert",
         with_sentiment=False,
         epoch=40,
-        end_warmup=15,
+        end_warmup=50,
         lr=0.001,
         scheduler_gamma=0.85,
         save_every_pt=1000,
@@ -101,9 +101,8 @@ def get_random_index(random_length):
     global random_index
     if os.path.isfile(random_file_path):
         print("old random")
-        f = open(random_file_path, "r")
-        random_index = [int(i) for i in list(f.read().split("\n")[:-1])]
-        f.close()
+        with open(random_file_path, "r") as f:
+            random_index = [int(i) for i in list(f.read().split("\n")[:-1])]
     else:
         print("new random")
         random_index = list(range(random_length))
