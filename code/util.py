@@ -24,33 +24,37 @@ def timeSince(since, percent):
 
 
 def progress(start, cur, total_len, loss, cur_read=0):
-    print("{} ({}%)\nloss = {}".format(
-        timeSince(start, (cur-cur_read) / (total_len-cur_read)),
-        (cur / total_len) * 100,
-        loss
+    print(
+        "{} ({}%)\nloss = {}".format(
+            timeSince(start, (cur - cur_read) / (total_len - cur_read)),
+            (cur / total_len) * 100,
+            loss,
+        )
     )
-    )
-
-
-# 輸入一段文字，返回每句的token和attention mask
-def tokenize_string_list(input_string, tokenizer):
-    if pd.notna(input_string):
-        sentence_list = nltk.sent_tokenize(input_string)
-        result = tokenizer(sentence_list, truncation=True,
-                           padding=True, max_length=50)
-        return result["input_ids"], result["attention_mask"]
 
 
 # 取得對應的tokenizer
 def get_tokenizer():
-    print("Preprocessing {} on {}.".format(
-        globals.config.model_type, globals.config.subject))
+    print(
+        "Preprocessing {} on {}.".format(
+            globals.config.model_type, globals.config.subject
+        )
+    )
     if globals.config.model_type == "Bert":
-        print(
-            "Get tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased'.")
+        print("Get tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased').")
 
         from transformers import BertTokenizerFast
-        return BertTokenizerFast.from_pretrained('bert-base-uncased')
+
+        return BertTokenizerFast.from_pretrained("bert-base-uncased")
+
+
+# 輸入一段文字，返回每句的token和attention mask
+def tokenize_string(input_string, tokenizer):
+    if pd.notna(input_string):
+        sentence_list = nltk.sent_tokenize(input_string)
+        result = tokenizer(sentence_list, truncation=True, padding=True, max_length=50)
+        return result["input_ids"], result["attention_mask"]
+    return [], []
 
 
 # 開始預處理
@@ -61,27 +65,44 @@ def preprocess():
     # ------------------------------------------------------------------------------- Tokenize articles -------------------------------------------------------------------
 
     total_rows = data_raw.shape[0]
-    token_data = pd.DataFrame({"title_token": [], "title_mask": [], "text_token": [
-    ], "text_mask": [], "tag": [], "title_len": [], "text_len": []})
+    token_data = pd.DataFrame(
+        {
+            "title_token": [],
+            "title_mask": [],
+            "text_token": [],
+            "text_mask": [],
+            "tag": [],
+            "title_len": [],
+            "text_len": [],
+        }
+    )
 
     real_data_num = -1
 
     start = time.time()
     for i, temp in data_raw.iterrows():
-        if(i % 10 == 0):
+        if i % 10 == 0:
             progress(start, i, total_rows, "N/A")
 
-        title_token, title_mask = tokenize_string_list(
-            temp["title"], tokenizer)
-        text_token, text_mask = tokenize_string_list(temp["text"], tokenizer)
+        title_token, title_mask = tokenize_string(temp["title"], tokenizer)
+        text_token, text_mask = tokenize_string(temp["text"], tokenizer)
 
-        token_data = token_data.append({"title_token": title_token, "title_mask": title_mask,
-                                        "text_token": text_token, "text_mask": text_mask,
-                                        "tag": temp["label"], "title_len": len(title_token), "text_len": len(text_token)}, ignore_index=True)
+        token_data = token_data.append(
+            {
+                "title_token": title_token,
+                "title_mask": title_mask,
+                "text_token": text_token,
+                "text_mask": text_mask,
+                "tag": temp["label"],
+                "title_len": len(title_token),
+                "text_len": len(text_token),
+            },
+            ignore_index=True,
+        )
 
         if real_data_num == -1 and temp["label"] == 0:
             real_data_num = i
-    fake_data_num = token_data.shape[0]-real_data_num
+    fake_data_num = token_data.shape[0] - real_data_num
     print("total data number: {}".format(token_data.shape[0]))
     print("real news number: {}".format(real_data_num))
     print("fake news number: {}".format(fake_data_num))
@@ -94,11 +115,15 @@ def preprocess():
     np.random.shuffle(fake_random_index)
 
     use_data_num = min(real_data_num, fake_data_num)
-    random_index_test = real_random_index[:int(use_data_num/5)] + \
-        fake_random_index[:int(use_data_num/5)]
+    random_index_test = (
+        real_random_index[: int(use_data_num / 5)]
+        + fake_random_index[: int(use_data_num / 5)]
+    )
 
-    random_index_train = real_random_index[int(use_data_num/5):use_data_num] + \
-        fake_random_index[int(use_data_num/5):use_data_num]
+    random_index_train = (
+        real_random_index[int(use_data_num / 5) : use_data_num]
+        + fake_random_index[int(use_data_num / 5) : use_data_num]
+    )
 
     testing_set = []
     training_set = []
