@@ -11,8 +11,8 @@ from util import preprocess
 import train
 
 
-do_preprocess = 1
-do_train = 0
+do_preprocess = 0
+do_train = 1
 do_evaluate = 0
 
 if __name__ == "__main__":
@@ -23,8 +23,6 @@ if __name__ == "__main__":
         preprocess()
     if do_train:
         print("Start training")
-        if not os.path.isdir("../{}/current".format(globals.config.model_type)):
-            os.makedirs("../{}/current".format(globals.config.model_type))
         train.train()
     if do_evaluate:
         print("evaluate")
