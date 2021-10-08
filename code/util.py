@@ -45,9 +45,6 @@ def get_tokenizer():
 
         from transformers import BertTokenizerFast
 
-<<<<<<< HEAD
-        return BertTokenizerFast.from_pretrained('bert-base-uncased')
-=======
         return BertTokenizerFast.from_pretrained("bert-base-uncased")
 
 
@@ -55,10 +52,10 @@ def get_tokenizer():
 def tokenize_string(input_string, tokenizer):
     if pd.notna(input_string):
         sentence_list = nltk.sent_tokenize(input_string)
-        result = tokenizer(sentence_list, truncation=True, padding=True, max_length=50)
+        result = tokenizer(sentence_list, truncation=True,
+                           padding=True, max_length=50)
         return result["input_ids"], result["attention_mask"]
     return [], []
->>>>>>> 6db81683adeeb851a1d7f82befd0c343496f35e1
 
 
 # 開始預處理
@@ -125,8 +122,8 @@ def preprocess():
     )
 
     random_index_train = (
-        real_random_index[int(use_data_num / 5) : use_data_num]
-        + fake_random_index[int(use_data_num / 5) : use_data_num]
+        real_random_index[int(use_data_num / 5): use_data_num]
+        + fake_random_index[int(use_data_num / 5): use_data_num]
     )
 
     testing_set = []
