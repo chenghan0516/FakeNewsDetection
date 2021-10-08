@@ -50,6 +50,7 @@ def get_tokenizer():
             "Get tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased'.")
 
         from transformers import BertTokenizerFast
+
         return BertTokenizerFast.from_pretrained('bert-base-uncased')
 
 

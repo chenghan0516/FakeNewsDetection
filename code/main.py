@@ -12,7 +12,7 @@ import train
 
 save_every_pt = 1000
 
-do_preprocess = 0
+do_preprocess = 1
 do_train = 0
 do_evaluate = 0
 
