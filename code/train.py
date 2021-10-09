@@ -22,7 +22,6 @@ def create_desired_model():
         else:
             print("import model Bert")
             from model.myBert import FakeNewsDetection
-
             return FakeNewsDetection().to(device)
 
 
@@ -39,7 +38,7 @@ class Train_Core:
 
         self.losses = []
         self.cur_news = 0
-        self.freezed_bert_layer_num_temp = globals.config.freezed_bert_layer_num
+        self.freezed_pretrain_layer_num_temp = globals.config.freezed_pretrain_layer_num
         self.cur_unfreezed_layer_num = 1
 
     def load_state_dict(self, checkpoint):
@@ -67,13 +66,13 @@ class Train_Core:
         self.f.close()
 
     def freeze_layers(self, cur_epoch):
-        modules = [self.FND_model.bertEmbed.embedding]
+        modules = [self.FND_model.myEmbed.embedding]
         for module in modules:
             for param in module.parameters():
                 param.requires_grad = False
         if cur_epoch >= globals.config.end_warmup:
             modules = [
-                self.FND_model.bertEmbed.embedding.encoder.layer[self.freezed_bert_layer_num_temp:]]
+                self.FND_model.myEmbed.embedding.encoder.layer[self.freezed_pretrain_layer_num_temp:]]
             for module in modules:
                 for param in module.parameters():
                     param.requires_grad = True
@@ -81,9 +80,9 @@ class Train_Core:
                         and self.cur_unfreezed_layer_num < globals.config.max_unfreeze_layer_num
                         and (cur_epoch - globals.config.end_warmup + 1) % globals.config.progressive_unfreeze_step == 0
                     ):
-                self.freezed_bert_layer_num_temp -= 1
-                self.cur_unfreezed_layer_num = globals.config.freezed_bert_layer_num - \
-                    self.freezed_bert_layer_num_temp + 1
+                self.freezed_pretrain_layer_num_temp -= 1
+                self.cur_unfreezed_layer_num = globals.config.freezed_pretrain_layer_num - \
+                    self.freezed_pretrain_layer_num_temp + 1
 
     def in_old_progress(self, target):
         return self.cur_news <= target
@@ -206,7 +205,7 @@ class Trainer:
             train_core.freeze_layers(epoch)
             # 迭代訓練資料
             for i in train_index:
-                # 訓練BERT時跳過過長的文章
+                # 訓練pretrained model時跳過過長的文章
                 if (epoch >= globals.config.end_warmup
                     and train_core.if_skip_long_news()
                     and len(eval(self.token_data_read[globals.random_index[i]][2]))

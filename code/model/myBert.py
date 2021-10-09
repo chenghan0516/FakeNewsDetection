@@ -34,7 +34,7 @@ class BiGRU(nn.Module):
 class FakeNewsDetection(nn.Module):
     def __init__(self):
         super(FakeNewsDetection, self).__init__()
-        self.bertEmbed = BiGRU()
+        self.myEmbed = BiGRU()
         self.FC_1 = nn.Linear(GRU_HIDDEN_SIZE, 64)
         self.FC_2 = nn.Linear(64, 16)
         self.FC_3 = nn.Linear(16, 1)
@@ -46,10 +46,10 @@ class FakeNewsDetection(nn.Module):
         textEmbed = torch.zeros(GRU_HIDDEN_SIZE).to(device)
         newsEmbed = torch.zeros(GRU_HIDDEN_SIZE).to(device)
         if len(titles) != 0:
-            titleEmbed = self.bertEmbed(titles, title_mask)
+            titleEmbed = self.myEmbed(titles, title_mask)
             count += 1
         if len(texts) != 0:
-            textEmbed = self.bertEmbed(texts, text_mask)
+            textEmbed = self.myEmbed(texts, text_mask)
             count += 1
         if count != 0:
             newsEmbed = (titleEmbed+textEmbed)/count

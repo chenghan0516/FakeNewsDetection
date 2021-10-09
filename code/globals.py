@@ -6,72 +6,43 @@ import json
 
 
 class Config:
-    def __init__(
-        self,
-        subject,
-        model_type,
-        with_sentiment,
-        epoch,
-        end_warmup,
-        lr,
-        scheduler_gamma,
-        save_every_pt,
-        freezed_bert_layer_num,
-        progressive_unfreeze,
-        progressive_unfreeze_step,
-        max_unfreeze_layer_num,
-        evaluate_or_train,
-        eval_best_n,
-        eval_waiting_queue_begin,
-    ):
+    def __init__(self):
+        with open("code/config.json", "r") as f:
+            config_json = json.load(f)
+            # 現在在執行甚麼
+            self.subject = config_json["subject"]
+            self.model_type = config_json["model_type"]
+            self.with_sentiment = config_json["with_sentiment"]
 
-        # 現在在執行甚麼
-        self.subject = subject
-        self.model_type = model_type
-        self.with_sentiment = with_sentiment
+            # 訓練過程參數
+            self.epoch = config_json["epoch"]  # 訓練總epoch
+            self.end_warmup = config_json["end_warmup"]  # 暖身完畢的epoch
+            self.lr = config_json["lr"]  # learning rate
+            self.scheduler_gamma = config_json["scheduler_gamma"]
+            self.save_every_pt = config_json["save_every_pt"]  # 每幾epoch存一次模型
 
-        # 訓練過程參數
-        self.epoch = epoch  # 訓練總epoch
-        self.end_warmup = end_warmup  # 暖身完畢的epoch
-        self.lr = lr  # learning rate
-        self.scheduler_gamma = scheduler_gamma
-        self.save_every_pt = save_every_pt  # 每幾epoch存一次模型
+            # pretrain model相關
+            # freeze前幾層pretrained model(e.g. bert共12層)
+            self.freezed_pretrain_layer_num = config_json["freezed_pretrain_layer_num"]
+            # 是否一層一層解凍pretrained model
+            self.progressive_unfreeze = config_json["progressive_unfreeze"]
+            # 每幾epoch解凍一層模型
+            self.progressive_unfreeze_step = config_json["progressive_unfreeze_step"]
+            # 最多解凍幾層
+            self.max_unfreeze_layer_num = config_json["max_unfreeze_layer_num"]
 
-        # pretrain model相關
-        # freeze前幾層pretrained model(bert共12層)
-        self.freezed_bert_layer_num = freezed_bert_layer_num
-        self.progressive_unfreeze = progressive_unfreeze  # 是否一層一層解凍pretrained model
-        self.progressive_unfreeze_step = progressive_unfreeze_step  # 每幾epoch解凍一層模型
-        self.max_unfreeze_layer_num = max_unfreeze_layer_num  # 最多解凍幾層
-
-        # evaluate用參數
-        # 0 = training set, 1 = evaluating set
-        self.evaluate_or_train = evaluate_or_train
-        self.eval_best_n = eval_best_n
-        self.eval_waiting_queue_begin = eval_waiting_queue_begin
-        self.eval_waiting_queue_end = self.eval_best_n + self.eval_waiting_queue_begin
+            # evaluate用參數
+            # 0 = training set, 1 = evaluating set
+            self.evaluate_or_train = config_json["evaluate_or_train"]
+            self.eval_best_n = config_json["eval_best_n"]
+            self.eval_waiting_queue_begin = config_json["eval_waiting_queue_begin"]
+            self.eval_waiting_queue_end = self.eval_best_n + self.eval_waiting_queue_begin
 
 
 def init():
 
     global config
-    config = Config(
-        subject="politifact",
-        model_type="Bert",
-        with_sentiment=False,
-        epoch=40,
-        end_warmup=50,
-        lr=0.001,
-        scheduler_gamma=0.85,
-        save_every_pt=1000,
-        freezed_bert_layer_num=10,
-        progressive_unfreeze=False,
-        progressive_unfreeze_step=10,
-        max_unfreeze_layer_num=3,
-        evaluate_or_train=1,
-        eval_best_n=50,
-        eval_waiting_queue_begin=0,
-    )
+    config = Config()
 
     # paths in preprocessing
     global raw_data_path, train_data_path, test_data_path

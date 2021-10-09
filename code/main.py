@@ -12,7 +12,7 @@ import train
 
 
 do_preprocess = 0
-do_train = 1
+do_train = 0
 do_evaluate = 0
 
 if __name__ == "__main__":
@@ -20,9 +20,10 @@ if __name__ == "__main__":
     globals.init()
 
     if do_preprocess:
+        print("Start preprocess")
         preprocess()
     if do_train:
         print("Start training")
         train.train()
     if do_evaluate:
-        print("evaluate")
+        print("Start evaluating")
