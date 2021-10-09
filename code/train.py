@@ -40,6 +40,7 @@ class Train_Core:
         self.losses = []
         self.cur_news = 0
         self.freezed_bert_layer_num_temp = globals.config.freezed_bert_layer_num
+        self.cur_unfreezed_layer_num = 1
 
     def load_state_dict(self, checkpoint):
         self.FND_model.load_state_dict(checkpoint["model_state_dict"])
@@ -72,24 +73,17 @@ class Train_Core:
                 param.requires_grad = False
         if cur_epoch >= globals.config.end_warmup:
             modules = [
-                self.FND_model.bertEmbed.embedding.encoder.layer[
-                    self.freezed_bert_layer_num_temp :
-                ]
-            ]
+                self.FND_model.bertEmbed.embedding.encoder.layer[self.freezed_bert_layer_num_temp:]]
             for module in modules:
                 for param in module.parameters():
                     param.requires_grad = True
-            if (
-                globals.config.progressive_unfreeze
-                and globals.config.freezed_bert_layer_num
-                - self.freezed_bert_layer_num_temp
-                + 1
-                < globals.config.max_unfreeze_layer_num
-                and (cur_epoch - globals.config.end_warmup + 1)
-                % globals.config.progressive_unfreeze_step
-                == 0
-            ):
+            if (globals.config.progressive_unfreeze
+                        and self.cur_unfreezed_layer_num < globals.config.max_unfreeze_layer_num
+                        and (cur_epoch - globals.config.end_warmup + 1) % globals.config.progressive_unfreeze_step == 0
+                    ):
                 self.freezed_bert_layer_num_temp -= 1
+                self.cur_unfreezed_layer_num = globals.config.freezed_bert_layer_num - \
+                    self.freezed_bert_layer_num_temp + 1
 
     def in_old_progress(self, target):
         return self.cur_news <= target
@@ -103,7 +97,8 @@ class Train_Core:
         title_mask = torch.tensor(eval(X[1])).to(device)
         text_token = torch.tensor(eval(X[2])).to(device)
         text_mask = torch.tensor(eval(X[3])).to(device)
-        predict = self.FND_model(title_token, title_mask, text_token, text_mask)
+        predict = self.FND_model(
+            title_token, title_mask, text_token, text_mask)
         loss = self.loss_func(predict.view(1), torch.tensor([y]).to(device))
         # print("predict: {}\nans:     {}\n loss: {}".format(predict,torch.tensor([y]),loss))
         loss.backward()
@@ -143,19 +138,15 @@ class Train_Core:
 
     def print_progress(self, total_news_count, loss, old_progress):
         if self.cur_news % 10 == 0:
-            progress(self.start, self.cur_news, total_news_count, loss, old_progress)
+            progress(self.start, self.cur_news,
+                     total_news_count, loss, old_progress)
 
     def scheduler_step(self, old_progress):
         if self.cur_news > old_progress:
             self.scheduler.step()
 
-    def plot_loss(fold):
-        f = open("{}/fold_{}/loss.txt".format(globals.current_folder, fold), "r")
-        losses = [float(i) for i in list(f.read().split("\n")[:-1])]
-        f.close()
-        plt.plot(range(len(losses)), losses)
-        plt.savefig("{}/fold_{}/loss.png".format(globals.current_folder, fold))
-        plt.show()
+    def if_skip_long_news(self):
+        return self.cur_unfreezed_layer_num > 2
 
 
 class Trainer:
@@ -174,9 +165,9 @@ class Trainer:
                     )
                 )
         else:
-            self.progress_json = {"fold": 0, "cur": -1}
+            self.progress_json = {"fold": 1, "cur": -1}
             self.checkpoint = None
-        self.fold = 0
+        self.fold = 1
 
     def next_fold(self):
         self.fold += 1
@@ -191,6 +182,15 @@ class Trainer:
     def init_fold_progress(self):
         self.progress_json["cur"] = -1
         self.if_continue = False
+
+    def plot_loss(self):
+        f = open("{}/fold_{}/loss.txt".format(globals.current_folder, self.fold), "r")
+        losses = [float(i) for i in list(f.read().split("\n")[:-1])]
+        f.close()
+        plt.plot(range(len(losses)), losses)
+        plt.savefig(
+            "{}/fold_{}/loss.png".format(globals.current_folder, self.fold))
+        plt.show()
 
     def train_model(self, train_index):
         train_core = Train_Core()
@@ -207,19 +207,20 @@ class Trainer:
             # 迭代訓練資料
             for i in train_index:
                 # 訓練BERT時跳過過長的文章
-                if (
-                    epoch >= globals.config.end_warmup
+                if (epoch >= globals.config.end_warmup
+                    and train_core.if_skip_long_news()
                     and len(eval(self.token_data_read[globals.random_index[i]][2]))
                     > 500
-                ):
+                    ):
                     print(
                         "skip: {}".format(
-                            len(eval(self.token_data_read[globals.random_index[i]][2]))
+                            len(eval(
+                                self.token_data_read[globals.random_index[i]][2]))
                         )
                     )
                     continue
                 # 走到上次進度
-                if train_core.in_old_progress:
+                if train_core.in_old_progress(self.progress_json["cur"]):
                     train_core.next_news()
                     continue
 
@@ -245,7 +246,7 @@ class Trainer:
             train_core.scheduler_step(self.progress_json["cur"])
         train_core.close_loss_file()
 
-        train_core.plot_loss(self.fold)
+        self.plot_loss()
 
 
 def train():
@@ -253,15 +254,15 @@ def train():
     kf = KFold(n_splits=5, shuffle=False)
     for train_index, _ in kf.split(globals.random_index):
         # training-----------------------------------------------------------------------------------------------------------------------------
-        trainer.next_fold()
         if trainer.in_old_fold():
             continue
         trainer.create_fold_folder()
 
         trainer.train_model(train_index)
 
+        trainer.next_fold()
         trainer.init_fold_progress()
-        trainer.if_continue = False
+
         break
 
     print("end")
