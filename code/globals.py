@@ -7,7 +7,7 @@ import json
 
 class Config:
     def __init__(self):
-        with open("code/config.json", "r") as f:
+        with open("config.json", "r") as f:
             config_json = json.load(f)
             # 現在在執行甚麼
             self.subject = config_json["subject"]
@@ -46,22 +46,24 @@ def init():
 
     # paths in preprocessing
     global raw_data_path, train_data_path, test_data_path
-    raw_data_path = "{}_clean.csv".format(config.subject)
-    if not os.path.isdir("{}".format(config.model_type)):
-        os.makedirs("{}".format(config.model_type))
-    train_data_path = "{}/{}_{}_token_data_train.csv".format(
+    raw_data_path = "../{}_clean.csv".format(config.subject)
+
+    if not os.path.isdir("../{}".format(config.model_type)):
+        os.makedirs("../{}".format(config.model_type))
+    train_data_path = "../{}/{}_{}_token_data_train.csv".format(
         config.model_type, config.model_type, config.subject
     )
-    test_data_path = "{}/{}_{}_token_data_test.csv".format(
+    test_data_path = "../{}/{}_{}_token_data_test.csv".format(
         config.model_type, config.model_type, config.subject
     )
 
     # paths in training
     global current_folder, train_progress_path, random_file_path
     if config.with_sentiment:
-        current_folder = "{}_with_sentiment/current".format(config.model_type)
+        current_folder = "../{}_with_sentiment/current".format(
+            config.model_type)
     else:
-        current_folder = "{}/current".format(config.model_type)
+        current_folder = "../{}/current".format(config.model_type)
     if not os.path.isdir(current_folder):
         os.makedirs(current_folder)
     train_progress_path = "{}/train_progress.json".format(current_folder)
