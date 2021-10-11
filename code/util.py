@@ -4,6 +4,7 @@ import nltk
 import time
 import math
 import globals
+import os
 
 
 def asMinutes(s):
@@ -58,7 +59,41 @@ def tokenize_string(input_string, tokenizer):
     return [], []
 
 
+def get_raw_random_index(real_data_num, total_data_num):
+    # real
+    if os.path.isfile(globals.raw_data_random_path_real):
+        print("real: old random")
+        with open(globals.raw_data_random_path_real, "r") as f:
+            random_index_real = [int(i)
+                                 for i in list(f.read().split("\n")[:-1])]
+    else:
+        print("real: new random")
+        random_index_real = list(range(0, real_data_num))
+        np.random.shuffle(random_index_real)
+        f = open(globals.raw_data_random_path_real, "w")
+        for i in random_index_real:
+            f.write(str(i) + "\n")
+        f.close()
+    # fake
+    if os.path.isfile(globals.raw_data_random_path_fake):
+        print("fake: old random")
+        with open(globals.raw_data_random_path_fake, "r") as f:
+            random_index_fake = [int(i)
+                                 for i in list(f.read().split("\n")[:-1])]
+    else:
+        print("fake: new random")
+        random_index_fake = list(range(real_data_num, total_data_num))
+        np.random.shuffle(random_index_fake)
+        f = open(globals.raw_data_random_path_fake, "w")
+        for i in random_index_fake:
+            f.write(str(i) + "\n")
+        f.close()
+
+    return random_index_real, random_index_fake
+
 # 開始預處理
+
+
 def preprocess():
     nltk.download("popular")
     data_raw = pd.read_csv(globals.raw_data_path)
@@ -109,11 +144,8 @@ def preprocess():
     print("fake news number: {}".format(fake_data_num))
 
     # ------------------------------------------------------------------------------- 切分training set跟testing set -------------------------------------------------------------------
-    real_random_index = list(range(0, real_data_num))
-    np.random.shuffle(real_random_index)
-
-    fake_random_index = list(range(real_data_num, token_data.shape[0]))
-    np.random.shuffle(fake_random_index)
+    real_random_index, fake_random_index = get_raw_random_index(
+        real_data_num, token_data.shape[0])
 
     use_data_num = min(real_data_num, fake_data_num)
     random_index_test = (

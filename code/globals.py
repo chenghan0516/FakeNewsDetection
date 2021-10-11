@@ -45,9 +45,15 @@ def init():
     config = Config()
 
     # paths in preprocessing
-    global raw_data_path, train_data_path, test_data_path
+    # raw data路徑
+    global raw_data_path, raw_data_random_path_real, raw_data_random_path_fake
     raw_data_path = "../{}_clean.csv".format(config.subject)
+    # 切分檔案用random
+    raw_data_random_path_real = "../{}_random_real.txt".format(config.subject)
+    raw_data_random_path_fake = "../{}_random_fake.txt".format(config.subject)
 
+    # 訓練/測試資料路徑
+    global train_data_path, test_data_path
     if not os.path.isdir("../{}".format(config.model_type)):
         os.makedirs("../{}".format(config.model_type))
     train_data_path = "../{}/{}_{}_token_data_train.csv".format(
@@ -71,7 +77,7 @@ def init():
 
 
 def get_random_index(random_length):
-    global random_index
+    global random_index, random_file_path
     if os.path.isfile(random_file_path):
         print("old random")
         with open(random_file_path, "r") as f:
