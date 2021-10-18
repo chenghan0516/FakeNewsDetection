@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import pandas as pd
 import torch
 import json
 
@@ -36,7 +35,9 @@ class Config:
             self.evaluate_or_train = config_json["evaluate_or_train"]
             self.eval_best_n = config_json["eval_best_n"]
             self.eval_waiting_queue_begin = config_json["eval_waiting_queue_begin"]
-            self.eval_waiting_queue_end = self.eval_best_n + self.eval_waiting_queue_begin
+            self.eval_waiting_queue_end = (
+                self.eval_best_n + self.eval_waiting_queue_begin
+            )
 
 
 def init():
@@ -52,7 +53,7 @@ def init():
     raw_data_random_path_real = "../{}_random_real.txt".format(config.subject)
     raw_data_random_path_fake = "../{}_random_fake.txt".format(config.subject)
 
-    # 訓練/測試資料路徑
+    # data paths
     global train_data_path, test_data_path
     if not os.path.isdir("../{}".format(config.model_type)):
         os.makedirs("../{}".format(config.model_type))
@@ -62,18 +63,20 @@ def init():
     test_data_path = "../{}/{}_{}_token_data_test.csv".format(
         config.model_type, config.model_type, config.subject
     )
+    global device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # paths in training
-    global current_folder, train_progress_path, random_file_path
+    global current_folder, train_progress_path, random_file_path, eval_progress_path
     if config.with_sentiment:
-        current_folder = "../{}_with_sentiment/current".format(
-            config.model_type)
+        current_folder = "../{}_with_sentiment/current".format(config.model_type)
     else:
         current_folder = "../{}/current".format(config.model_type)
     if not os.path.isdir(current_folder):
         os.makedirs(current_folder)
     train_progress_path = "{}/train_progress.json".format(current_folder)
     random_file_path = "{}/random.txt".format(current_folder)
+    eval_progress_path = "{}/eval_progress.json".format(current_folder)
 
 
 def get_random_index(random_length):

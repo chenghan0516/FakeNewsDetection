@@ -53,19 +53,18 @@ def get_tokenizer():
 def tokenize_string(input_string, tokenizer):
     if pd.notna(input_string):
         sentence_list = nltk.sent_tokenize(input_string)
-        result = tokenizer(sentence_list, truncation=True,
-                           padding=True, max_length=50)
+        result = tokenizer(sentence_list, truncation=True, padding=True, max_length=50)
         return result["input_ids"], result["attention_mask"]
     return [], []
 
 
+# 預處理用亂數產生
 def get_raw_random_index(real_data_num, total_data_num):
     # real
     if os.path.isfile(globals.raw_data_random_path_real):
         print("real: old random")
         with open(globals.raw_data_random_path_real, "r") as f:
-            random_index_real = [int(i)
-                                 for i in list(f.read().split("\n")[:-1])]
+            random_index_real = [int(i) for i in list(f.read().split("\n")[:-1])]
     else:
         print("real: new random")
         random_index_real = list(range(0, real_data_num))
@@ -78,8 +77,7 @@ def get_raw_random_index(real_data_num, total_data_num):
     if os.path.isfile(globals.raw_data_random_path_fake):
         print("fake: old random")
         with open(globals.raw_data_random_path_fake, "r") as f:
-            random_index_fake = [int(i)
-                                 for i in list(f.read().split("\n")[:-1])]
+            random_index_fake = [int(i) for i in list(f.read().split("\n")[:-1])]
     else:
         print("fake: new random")
         random_index_fake = list(range(real_data_num, total_data_num))
@@ -91,9 +89,8 @@ def get_raw_random_index(real_data_num, total_data_num):
 
     return random_index_real, random_index_fake
 
-# 開始預處理
 
-
+# 預處理
 def preprocess():
     nltk.download("popular")
     data_raw = pd.read_csv(globals.raw_data_path)
@@ -145,7 +142,8 @@ def preprocess():
 
     # ------------------------------------------------------------------------------- 切分training set跟testing set -------------------------------------------------------------------
     real_random_index, fake_random_index = get_raw_random_index(
-        real_data_num, token_data.shape[0])
+        real_data_num, token_data.shape[0]
+    )
 
     use_data_num = min(real_data_num, fake_data_num)
     random_index_test = (
@@ -154,8 +152,8 @@ def preprocess():
     )
 
     random_index_train = (
-        real_random_index[int(use_data_num / 5): use_data_num]
-        + fake_random_index[int(use_data_num / 5): use_data_num]
+        real_random_index[int(use_data_num / 5) : use_data_num]
+        + fake_random_index[int(use_data_num / 5) : use_data_num]
     )
 
     testing_set = []
@@ -175,3 +173,15 @@ def preprocess():
 
     token_data[testing_set].to_csv(globals.test_data_path, index=False)
     token_data[training_set].to_csv(globals.train_data_path, index=False)
+
+
+# 取得相對應的model
+def create_desired_model():
+    if globals.config.model_type == "Bert":
+        if globals.config.with_sentiment:
+            print("import model Bert with sentiment")
+        else:
+            print("import model Bert")
+            from model.myBert import FakeNewsDetection
+
+            return FakeNewsDetection().to(globals.device)

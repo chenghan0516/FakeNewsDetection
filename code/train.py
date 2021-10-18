@@ -7,25 +7,13 @@ import globals
 import os
 import json
 import time
-from util import progress
+import util
 import matplotlib.pyplot as plt
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-def create_desired_model():
-    if globals.config.model_type == "Bert":
-        if globals.config.with_sentiment:
-            print("import model Bert with sentiment")
-        else:
-            print("import model Bert")
-            from model.myBert import FakeNewsDetection
-            return FakeNewsDetection().to(device)
 
 
 class Train_Core:
     def __init__(self):
-        self.FND_model = create_desired_model()
+        self.FND_model = util.create_desired_model()
         self.optimizer = torch.optim.AdamW(
             self.FND_model.parameters(), lr=globals.config.lr
         )
@@ -70,17 +58,26 @@ class Train_Core:
                 param.requires_grad = False
         if cur_epoch >= globals.config.end_warmup:
             modules = [
-                self.FND_model.myEmbed.embedding.encoder.layer[self.freezed_pretrain_layer_num_temp:]]
+                self.FND_model.myEmbed.embedding.encoder.layer[
+                    self.freezed_pretrain_layer_num_temp :
+                ]
+            ]
             for module in modules:
                 for param in module.parameters():
                     param.requires_grad = True
-            if (globals.config.progressive_unfreeze
-                        and self.cur_unfreezed_layer_num < globals.config.max_unfreeze_layer_num
-                        and (cur_epoch - globals.config.end_warmup + 1) % globals.config.progressive_unfreeze_step == 0
-                    ):
+            if (
+                globals.config.progressive_unfreeze
+                and self.cur_unfreezed_layer_num < globals.config.max_unfreeze_layer_num
+                and (cur_epoch - globals.config.end_warmup + 1)
+                % globals.config.progressive_unfreeze_step
+                == 0
+            ):
                 self.freezed_pretrain_layer_num_temp -= 1
-                self.cur_unfreezed_layer_num = globals.config.freezed_pretrain_layer_num - \
-                    self.freezed_pretrain_layer_num_temp + 1
+                self.cur_unfreezed_layer_num = (
+                    globals.config.freezed_pretrain_layer_num
+                    - self.freezed_pretrain_layer_num_temp
+                    + 1
+                )
 
     def in_old_progress(self, target):
         return self.cur_news <= target
@@ -90,13 +87,12 @@ class Train_Core:
 
     def train_iter(self, X, y):
         self.optimizer.zero_grad()
-        title_token = torch.tensor(eval(X[0])).to(device)
-        title_mask = torch.tensor(eval(X[1])).to(device)
-        text_token = torch.tensor(eval(X[2])).to(device)
-        text_mask = torch.tensor(eval(X[3])).to(device)
-        predict = self.FND_model(
-            title_token, title_mask, text_token, text_mask)
-        loss = self.loss_func(predict.view(1), torch.tensor([y]).to(device))
+        title_token = torch.tensor(eval(X[0])).to(globals.device)
+        title_mask = torch.tensor(eval(X[1])).to(globals.device)
+        text_token = torch.tensor(eval(X[2])).to(globals.device)
+        text_mask = torch.tensor(eval(X[3])).to(globals.device)
+        predict = self.FND_model(title_token, title_mask, text_token, text_mask)
+        loss = self.loss_func(predict.view(1), torch.tensor([y]).to(globals.device))
         # print("predict: {}\nans:     {}\n loss: {}".format(predict,torch.tensor([y]),loss))
         loss.backward()
         self.optimizer.step()
@@ -135,8 +131,9 @@ class Train_Core:
 
     def print_progress(self, total_news_count, loss, old_progress):
         if self.cur_news % 10 == 0:
-            progress(self.start, self.cur_news,
-                     total_news_count, loss, old_progress)
+            util.progress(
+                self.start, self.cur_news, total_news_count, loss, old_progress
+            )
 
     def scheduler_step(self, old_progress):
         if self.cur_news > old_progress:
@@ -185,8 +182,7 @@ class Trainer:
         losses = [float(i) for i in list(f.read().split("\n")[:-1])]
         f.close()
         plt.plot(range(len(losses)), losses)
-        plt.savefig(
-            "{}/fold_{}/loss.png".format(globals.current_folder, self.fold))
+        plt.savefig("{}/fold_{}/loss.png".format(globals.current_folder, self.fold))
         plt.show()
 
     def train_model(self, train_index):
@@ -204,15 +200,15 @@ class Trainer:
             # 迭代訓練資料
             for i in train_index:
                 # 訓練pretrained model時跳過過長的文章
-                if (epoch >= globals.config.end_warmup
+                if (
+                    epoch >= globals.config.end_warmup
                     and train_core.if_skip_long_news()
                     and len(eval(self.token_data_read[globals.random_index[i]][2]))
                     > 500
-                    ):
+                ):
                     print(
                         "skip: {}".format(
-                            len(eval(
-                                self.token_data_read[globals.random_index[i]][2]))
+                            len(eval(self.token_data_read[globals.random_index[i]][2]))
                         )
                     )
                     continue
@@ -252,13 +248,14 @@ def train():
     for train_index, _ in kf.split(globals.random_index):
         # training-----------------------------------------------------------------------------------------------------------------------------
         if trainer.in_old_fold():
+            trainer.next_fold()
             continue
         trainer.create_fold_folder()
 
         trainer.train_model(train_index)
 
-        trainer.next_fold()
         trainer.init_fold_progress()
+        trainer.next_fold()
 
         break
 
