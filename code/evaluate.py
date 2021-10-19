@@ -6,6 +6,7 @@ import json
 import torch
 import globals
 import heapq
+import util
 
 
 def evaluate_iter(eval_model, X, y, loss_func):
@@ -19,7 +20,7 @@ def evaluate_iter(eval_model, X, y, loss_func):
     return predict, loss.item()
 
 
-def evaluate_model(token_data_read, eval_index, eval_pt):
+def evaluate_model(eval_index, eval_pt):
     confusion_matrix = [[0, 0], [0, 0]]
 
     checkpoint = torch.load(
@@ -93,8 +94,19 @@ def evaluate_model(token_data_read, eval_index, eval_pt):
 
 
 class Evaluate_Core:
-    def __init__():
-        print("")
+    def __init__(self):
+        self.confusion_matrix = [[0, 0], [0, 0]]
+        self.checkpoint = torch.load(
+            "{}/fold_{}/FND_model_{}.pt".format(globals.current_folder, fold, eval_pt)
+        )
+        self.eval_model = util.create_desired_model()
+        eval_model.load_state_dict(checkpoint["model_state_dict"])
+
+        loss_func = nn.BCELoss()
+        eval_model.eval()
+        total_loss = 0
+        cur_eval = 0
+        start_eval = time.time()
 
 
 class Evaluator:
@@ -110,23 +122,15 @@ class Evaluator:
                     "{}/fold_{}/FND_model_{}.pt".format(
                         globals.current_folder,
                         self.progress_json["fold"],
-                        self.progress_json["temp_waiting_queue_num"],
+                        self.progress_json["candidate"],
                     )
                 )
         else:
-            self.progress_json = {"fold": 1, "temp_waiting_queue_num": 0}
+            self.progress_json = {"fold": 1, "candidate": 0}
             self.checkpoint = None
-        self.results = pd.DataFrame(
-            {
-                "num_pt": [],
-                "Avg_Loss": [],
-                "Accuracy": [],
-                "Precision": [],
-                "Recall": [],
-                "F1": [],
-            }
-        )
+
         self.fold = 1
+        self.results_buffer_init()
 
     def next_fold(self):
         self.fold += 1
@@ -174,23 +178,111 @@ class Evaluator:
             "{}/fold_{}/loss_batched.png".format(globals.current_folder, self.fold)
         )
         plt.show()
-        self.waiting_queue = [
+        buffer = [
             int(i) * globals.config.save_every_pt
             for i in list(map(plot_loss.index, heapq.nsmallest(best_n, plot_loss)))
         ]
 
-    def evaluate(self, eva_index):
-        # 迭代候選節點
-
-        for eval_pt in self.waiting_queue[
+        self.candidates = buffer[
             globals.config.eval_waiting_queue_begin
-            + self.progress_json[
-                "temp_waiting_queue_num"
-            ] : globals.config.eval_waiting_queue_end
-        ]:
+            + self.progress_json["candidate"] : globals.config.eval_waiting_queue_end
+        ]
+
+    def results_buffer_init(self):
+        self.results_buffer = pd.DataFrame(
+            {
+                "num_pt": [],
+                "Avg_Loss": [],
+                "Accuracy": [],
+                "Precision": [],
+                "Recall": [],
+                "F1": [],
+            }
+        )
+
+    def evaluate_model(self):
+        confusion_matrix = [[0, 0], [0, 0]]
+        checkpoint = torch.load(
+            "{}/current/fold_{}/FND_model_{}.pt".format(path, fold, eval_pt)
+        )
+        eval_model = FakeNewsDetection().to(device)
+        eval_model.load_state_dict(checkpoint["model_state_dict"])
+
+        loss_func = nn.BCELoss()
+        eval_model.eval()
+        total_loss = 0
+        cur_eval = 0
+        start_eval = time.time()
+
+        for i in eval_index:
+            predict, loss = evaluate_iter(
+                eval_model,
+                token_data_read[random_index_read[i]][:4],
+                float(token_data_read[random_index_read[i]][4]),
+                loss_func,
+            )
+            total_loss += loss
+            confusion_matrix[int(token_data_read[random_index_read[i]][4])][
+                predict > 0.5
+            ] += 1
+            if cur_eval % 10 == 0:
+                print("num in waiting_queue: {}".format(temp_waiting_queue_num))
+                progress(
+                    start_eval,
+                    cur_eval,
+                    len(eval_index),
+                    total_loss / (cur_eval + 1),
+                    0,
+                )
+            cur_eval += 1
+
+        accuracy = (confusion_matrix[0][0] + confusion_matrix[1][1]) / (
+            confusion_matrix[0][0]
+            + confusion_matrix[0][1]
+            + confusion_matrix[1][0]
+            + confusion_matrix[1][1]
+        )
+        if confusion_matrix[1][1] + confusion_matrix[0][1] == 0:
+            precision = "undefine"
+        else:
+            precision = confusion_matrix[1][1] / (
+                confusion_matrix[1][1] + confusion_matrix[0][1]
+            )
+        if confusion_matrix[1][1] + confusion_matrix[1][0] == 0:
+            recall = "undefine"
+        else:
+            recall = confusion_matrix[1][1] / (
+                confusion_matrix[1][1] + confusion_matrix[1][0]
+            )
+        if precision == "undefine" or recall == "undefine":
+            F1 = "undefine"
+        else:
+            F1 = 2 * precision * recall / (precision + recall)
+        print("average loss: {}".format(total_loss / len(eval_index)))
+        print("confusion_matrix: {}".format(confusion_matrix))
+        print(" Accuracy: {}".format(accuracy))
+        print(" Precision: {}".format(precision))
+        print(" Recall: {}".format(recall))
+        print("F1: {}".format(F1))
+        return pd.DataFrame(
+            {
+                "num_pt": [eval_pt],
+                "Avg_Loss": [total_loss / len(eval_index)],
+                "Accuracy": [accuracy],
+                "Precision": [precision],
+                "Recall": [recall],
+                "F1": [F1],
+            }
+        )
+
+    def evaluate_candidates(self, eva_index):
+        self.results_buffer_init()
+
+        # 迭代候選節點
+        for eval_pt in self.candidates:
             # evaluate error
             # 測試
-            result = evaluate_model(token_data_read, eva_index, eval_pt)
+            result = evaluate_model(eva_index, eval_pt)
             # 結果輸出
             print("start writing result")
             result.to_csv(

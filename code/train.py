@@ -218,7 +218,7 @@ class Trainer:
                     continue
 
                 # 訓練
-                predict, loss = train_core.train_iter(
+                _, loss = train_core.train_iter(
                     self.token_data_read[globals.random_index[i]][:4],
                     float(self.token_data_read[globals.random_index[i]][4]),
                 )
