@@ -53,7 +53,8 @@ def get_tokenizer():
 def tokenize_string(input_string, tokenizer):
     if pd.notna(input_string):
         sentence_list = nltk.sent_tokenize(input_string)
-        result = tokenizer(sentence_list, truncation=True, padding=True, max_length=50)
+        result = tokenizer(sentence_list, truncation=True,
+                           padding=True, max_length=50)
         return result["input_ids"], result["attention_mask"]
     return [], []
 
@@ -64,7 +65,8 @@ def get_raw_random_index(real_data_num, total_data_num):
     if os.path.isfile(globals.raw_data_random_path_real):
         print("real: old random")
         with open(globals.raw_data_random_path_real, "r") as f:
-            random_index_real = [int(i) for i in list(f.read().split("\n")[:-1])]
+            random_index_real = [int(i)
+                                 for i in list(f.read().split("\n")[:-1])]
     else:
         print("real: new random")
         random_index_real = list(range(0, real_data_num))
@@ -77,7 +79,8 @@ def get_raw_random_index(real_data_num, total_data_num):
     if os.path.isfile(globals.raw_data_random_path_fake):
         print("fake: old random")
         with open(globals.raw_data_random_path_fake, "r") as f:
-            random_index_fake = [int(i) for i in list(f.read().split("\n")[:-1])]
+            random_index_fake = [int(i)
+                                 for i in list(f.read().split("\n")[:-1])]
     else:
         print("fake: new random")
         random_index_fake = list(range(real_data_num, total_data_num))
@@ -152,8 +155,8 @@ def preprocess():
     )
 
     random_index_train = (
-        real_random_index[int(use_data_num / 5) : use_data_num]
-        + fake_random_index[int(use_data_num / 5) : use_data_num]
+        real_random_index[int(use_data_num / 5): use_data_num]
+        + fake_random_index[int(use_data_num / 5): use_data_num]
     )
 
     testing_set = []

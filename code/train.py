@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 class Train_Core:
     def __init__(self):
         self.FND_model = util.create_desired_model()
+        self.FND_model.train()
         self.optimizer = torch.optim.AdamW(
             self.FND_model.parameters(), lr=globals.config.lr
         )
@@ -32,7 +33,6 @@ class Train_Core:
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
 
-    def into_train_state(self):
         self.FND_model.train()
 
     def start_time(self):
@@ -59,7 +59,7 @@ class Train_Core:
         if cur_epoch >= globals.config.end_warmup:
             modules = [
                 self.FND_model.myEmbed.embedding.encoder.layer[
-                    self.freezed_pretrain_layer_num_temp :
+                    self.freezed_pretrain_layer_num_temp:
                 ]
             ]
             for module in modules:
@@ -91,8 +91,10 @@ class Train_Core:
         title_mask = torch.tensor(eval(X[1])).to(globals.device)
         text_token = torch.tensor(eval(X[2])).to(globals.device)
         text_mask = torch.tensor(eval(X[3])).to(globals.device)
-        predict = self.FND_model(title_token, title_mask, text_token, text_mask)
-        loss = self.loss_func(predict.view(1), torch.tensor([y]).to(globals.device))
+        predict = self.FND_model(
+            title_token, title_mask, text_token, text_mask)
+        loss = self.loss_func(predict.view(
+            1), torch.tensor([y]).to(globals.device))
         # print("predict: {}\nans:     {}\n loss: {}".format(predict,torch.tensor([y]),loss))
         loss.backward()
         self.optimizer.step()
@@ -182,7 +184,8 @@ class Trainer:
         losses = [float(i) for i in list(f.read().split("\n")[:-1])]
         f.close()
         plt.plot(range(len(losses)), losses)
-        plt.savefig("{}/fold_{}/loss.png".format(globals.current_folder, self.fold))
+        plt.savefig(
+            "{}/fold_{}/loss.png".format(globals.current_folder, self.fold))
         plt.show()
 
     def train_model(self, train_index):
@@ -190,7 +193,6 @@ class Trainer:
         if self.if_continue:
             train_core.load_state_dict(self.checkpoint)
 
-        train_core.into_train_state()
         train_core.start_time()
         train_core.open_loss_file_to_write(self.if_continue, self.fold)
 
@@ -199,16 +201,18 @@ class Trainer:
             train_core.freeze_layers(epoch)
             # 迭代訓練資料
             for i in train_index:
+                cur_news_index = globals.random_index[i]
                 # 訓練pretrained model時跳過過長的文章
                 if (
                     epoch >= globals.config.end_warmup
                     and train_core.if_skip_long_news()
-                    and len(eval(self.token_data_read[globals.random_index[i]][2]))
+                    and len(eval(self.token_data_read[cur_news_index][2]))
                     > 500
                 ):
                     print(
                         "skip: {}".format(
-                            len(eval(self.token_data_read[globals.random_index[i]][2]))
+                            len(eval(
+                                self.token_data_read[cur_news_index][2]))
                         )
                     )
                     continue
@@ -219,8 +223,8 @@ class Trainer:
 
                 # 訓練
                 _, loss = train_core.train_iter(
-                    self.token_data_read[globals.random_index[i]][:4],
-                    float(self.token_data_read[globals.random_index[i]][4]),
+                    self.token_data_read[cur_news_index][:4],
+                    float(self.token_data_read[cur_news_index][4]),
                 )
                 train_core.push_loss(loss)
 
