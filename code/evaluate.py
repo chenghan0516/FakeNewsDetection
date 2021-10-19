@@ -234,10 +234,8 @@ class Evaluator:
         )
 
         print("start saving progress")
-        with open(
-            "{}/current/eva_progress.json".format(
-                globals.eval_progress_path), "w"
-        ) as progress_json_file:
+        with open(globals.eval_progress_path, "w"
+                  ) as progress_json_file:
             json.dump(
                 {"fold": self.progress_json["fold"],
                     "candidate": self.progress_json["candidate"]},
