@@ -1,9 +1,10 @@
 import globals
 from util import preprocess
 import train
+import evaluate
 
 do_preprocess = 0
-do_train = 1
+do_train = 0
 do_evaluate = 0
 
 if __name__ == "__main__":
@@ -18,3 +19,4 @@ if __name__ == "__main__":
         train.train()
     if do_evaluate:
         print("Start evaluating")
+        evaluate.evaluate()
