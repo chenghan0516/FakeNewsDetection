@@ -193,6 +193,7 @@ class Evaluator:
         )
         evaluate_core = Evaluate_Core()
         evaluate_core.load_state_dict(checkpoint)
+        evaluate_core.set_total_length(len(eval_index))
 
         evaluate_core.start_time()
 
@@ -223,7 +224,7 @@ class Evaluator:
             }
         )
 
-    def save_progress(self, result, fold):
+    def save_progress(self, result):
         print("start writing result")
         result.to_csv(
             self.result_file_path,
