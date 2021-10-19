@@ -25,7 +25,7 @@ class Evaluate_Core:
         self.cur_news = 0
 
     def load_state_dict(self, checkpoint):
-        self.FND_model.load_state_dict(checkpoint["model_state_dict"])
+        self.eval_model.load_state_dict(checkpoint["model_state_dict"])
 
         self.eval_model.eval()
 
