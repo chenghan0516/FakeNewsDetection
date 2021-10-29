@@ -8,7 +8,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 HIDDEN_SIZE = 128
 CNN2_KERNEL_SIZE = 50
 CNN2_STRIDE = 10
-CNN2_OUTPUT_DIM = (math.floor((100-CNN2_KERNEL_SIZE)/CNN2_STRIDE)+1)*768
+CNN2_OUTPUT_DIM = (math.floor((100-CNN2_KERNEL_SIZE)/CNN2_STRIDE)+1)*512
 
 # Bert-Embedding
 
@@ -32,8 +32,9 @@ class BiGRU(nn.Module):
         embedded = self.embedding(tokens, attention_mask=masks)[
             "last_hidden_state"]
         cls_vector = embedded[:, 0, :].reshape(-1, 1, 768)
-        cls_vector = torch.permute(cls_vector, (1, 2, 0))
+        cls_vector = cls_vector.permute(1, 2, 0)
         # CNN
+
         output = self.cnn1(cls_vector)
         output = self.relu1(output)
         # output = self.dropout1(output)
