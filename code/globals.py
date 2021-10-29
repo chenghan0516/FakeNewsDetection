@@ -10,6 +10,7 @@ class Config:
             config_json = json.load(f)
             # 現在在執行甚麼
             self.subject = config_json["subject"]
+            self.embedding_type = config_json["embedding_type"]
             self.model_type = config_json["model_type"]
             self.with_sentiment = config_json["with_sentiment"]
 
@@ -55,13 +56,13 @@ def init():
 
     # data paths
     global train_data_path, test_data_path
-    if not os.path.isdir("../{}".format(config.model_type)):
-        os.makedirs("../{}".format(config.model_type))
+    if not os.path.isdir("../{}".format(config.embedding_type)):
+        os.makedirs("../{}".format(config.embedding_type))
     train_data_path = "../{}/{}_{}_token_data_train.csv".format(
-        config.model_type, config.model_type, config.subject
+        config.embedding_type, config.embedding_type, config.subject
     )
     test_data_path = "../{}/{}_{}_token_data_test.csv".format(
-        config.model_type, config.model_type, config.subject
+        config.embedding_type, config.embedding_type, config.subject
     )
     global device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -69,9 +70,10 @@ def init():
     # paths in training
     global current_folder, train_progress_path, random_file_path, eval_progress_path
     if config.with_sentiment:
-        current_folder = "../{}_with_sentiment/current".format(config.model_type)
+        current_folder = "../{}_with_sentiment/current".format(
+            config.embedding_type)
     else:
-        current_folder = "../{}/current".format(config.model_type)
+        current_folder = "../{}/current".format(config.embedding_type)
     if not os.path.isdir(current_folder):
         os.makedirs(current_folder)
     train_progress_path = "{}/train_progress.json".format(current_folder)

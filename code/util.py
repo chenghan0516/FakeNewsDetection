@@ -38,10 +38,10 @@ def progress(start, cur, total_len, loss, cur_read=0):
 def get_tokenizer():
     print(
         "Preprocessing {} on {}.".format(
-            globals.config.model_type, globals.config.subject
+            globals.config.embedding_type, globals.config.subject
         )
     )
-    if globals.config.model_type == "Bert":
+    if globals.config.embedding_type == "Bert":
         print("Get tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased').")
 
         from transformers import BertTokenizerFast
@@ -180,11 +180,20 @@ def preprocess():
 
 # 取得相對應的model
 def create_desired_model():
-    if globals.config.model_type == "Bert":
-        if globals.config.with_sentiment:
-            print("import model Bert with sentiment")
-        else:
-            print("import model Bert")
-            from model.myBert import FakeNewsDetection
+    if globals.config.embedding_type == "Bert":
+        if globals.config.model_type == "rnn":
+            if globals.config.with_sentiment:
+                print("import model Bert-rnn with sentiment")
+            else:
+                print("import model Bert-rnn")
+                from model.Bert_RNN import FakeNewsDetection
 
-            return FakeNewsDetection().to(globals.device)
+                return FakeNewsDetection().to(globals.device)
+        elif globals.config.model_type == "cnn":
+            if globals.config.with_sentiment:
+                print("import model Bert-cnn with sentiment")
+            else:
+                print("import model Bert-cnn")
+                from model.Bert_CNN import FakeNewsDetection
+
+                return FakeNewsDetection().to(globals.device)

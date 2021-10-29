@@ -1,6 +1,7 @@
 {
     "subject":"politifact",
-    "model_type":"Bert",
+    "embedding_type":"Bert",
+    "model_type":"cnn",
     "with_sentiment":false,
     "epoch":40,
     "end_warmup":50,
