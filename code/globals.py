@@ -24,6 +24,8 @@ class Config:
             # pretrain model相關
             # freeze前幾層pretrained model(e.g. bert共12層)
             self.freezed_pretrain_layer_num = config_json["freezed_pretrain_layer_num"]
+            # 若有用到sentiment，是否finetune
+            self.freeze_sentiment_model = config_json["freeze_sentiment_model"]
             # 是否一層一層解凍pretrained model
             self.progressive_unfreeze = config_json["progressive_unfreeze"]
             # 每幾epoch解凍一層模型

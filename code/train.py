@@ -52,7 +52,11 @@ class Train_Core:
         self.f.close()
 
     def freeze_layers(self, cur_epoch):
-        modules = [self.FND_model.myEmbed.embedding]
+        if globals.config.with_sentiment and globals.config.freeze_sentiment_model:
+            modules = [self.FND_model.myEmbed.embedding,
+                       self.FND_model.myEmbed.sentiment_embed]
+        else:
+            modules = [self.FND_model.myEmbed.embedding]
         for module in modules:
             for param in module.parameters():
                 param.requires_grad = False
