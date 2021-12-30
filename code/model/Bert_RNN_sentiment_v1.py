@@ -31,7 +31,7 @@ class Sentiment(nn.Module):
         output = self.FC_2(F.relu(output))
         # output = self.FC_3(F.relu(output))
 
-        return output
+        return output, hidden
 
 # Bert-Embedding
 
@@ -57,11 +57,12 @@ class BiGRU(nn.Module):
         embedded = self.embedding(tokens, attention_mask=masks)[
             "last_hidden_state"]
         cls_vector = embedded[:, 0, :].reshape(-1, 1, 768)
-
+        sentiment_hidden = torch.zeros(2, 1, 128)
         # sentiment
         s_embed = torch.tensor([[[0]*SENT_EMBED_SIZE]]).to(device)
         for i in cls_vector:
-            s_embed_temp = self.sentiment_embed(i.view(1, 1, -1))
+            s_embed_temp, sentiment_hidden = self.sentiment_embed(
+                i.view(1, 1, -1), sentiment_hidden)
             s_embed = torch.cat(
                 (s_embed, s_embed_temp.view(1, 1, SENT_EMBED_SIZE)), 0)
         cls_vector = torch.cat((cls_vector, s_embed[1:].to(device)), 2)
