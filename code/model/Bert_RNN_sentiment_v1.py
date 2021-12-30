@@ -57,7 +57,7 @@ class BiGRU(nn.Module):
         embedded = self.embedding(tokens, attention_mask=masks)[
             "last_hidden_state"]
         cls_vector = embedded[:, 0, :].reshape(-1, 1, 768)
-        sentiment_hidden = torch.zeros(2, 1, 128)
+        sentiment_hidden = torch.zeros(2, 1, 128).to(device)
         # sentiment
         s_embed = torch.tensor([[[0]*SENT_EMBED_SIZE]]).to(device)
         for i in cls_vector:
