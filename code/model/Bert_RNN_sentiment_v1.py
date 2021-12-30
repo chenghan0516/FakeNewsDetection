@@ -22,8 +22,8 @@ class Sentiment(nn.Module):
         self.FC_2 = nn.Linear(64, 16)
         self.FC_3 = nn.Linear(16, 1)
 
-    def forward(self, cls_vector):
-        _, hidden = self.gru(cls_vector)
+    def forward(self, cls_vector, h_0):
+        _, hidden = self.gru(cls_vector, h_0)
         embed = hidden[-1]
 
         # print(newsEmbed)
