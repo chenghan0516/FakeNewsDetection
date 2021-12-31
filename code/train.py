@@ -52,30 +52,29 @@ class Train_Core:
         self.f.close()
 
     def freeze_layers(self, cur_epoch):
-        if globals.config.with_sentiment and globals.config.freeze_sentiment_model:
-            modules = [self.FND_model.myEmbed.embedding,
-                       self.FND_model.myEmbed.sentiment_embed]
-        else:
-            modules = [self.FND_model.myEmbed.embedding]
+        # to freeze sentiment_embed or not
+        modules = [self.FND_model.myEmbed.embedding]
+        if globals.config.with_sentiment:
+            modules += [self.FND_model.myEmbed.sentiment_embed]
         for module in modules:
             for param in module.parameters():
                 param.requires_grad = False
+
+        # unfreeze
         if cur_epoch >= globals.config.end_warmup:
             modules = [
-                self.FND_model.myEmbed.embedding.encoder.layer[
-                    self.freezed_pretrain_layer_num_temp:
-                ]
-            ]
+                self.FND_model.myEmbed.embedding.encoder.layer[self.freezed_pretrain_layer_num_temp:]]
+            if globals.config.with_sentiment and (not globals.config.freeze_sentiment_model):
+                modules += [self.FND_model.myEmbed.sentiment_embed]
+
             for module in modules:
                 for param in module.parameters():
                     param.requires_grad = True
-            if (
-                globals.config.progressive_unfreeze
+            # progressive_unfreeze bert
+            if (globals.config.progressive_unfreeze
                 and self.cur_unfreezed_layer_num < globals.config.max_unfreeze_layer_num
-                and (cur_epoch - globals.config.end_warmup + 1)
-                % globals.config.progressive_unfreeze_step
-                == 0
-            ):
+                and (cur_epoch - globals.config.end_warmup + 1) % globals.config.progressive_unfreeze_step == 0
+                ):
                 self.freezed_pretrain_layer_num_temp -= 1
                 self.cur_unfreezed_layer_num = (
                     globals.config.freezed_pretrain_layer_num
