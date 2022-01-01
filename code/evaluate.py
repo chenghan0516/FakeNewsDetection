@@ -166,7 +166,7 @@ class Evaluator:
         plt.show()
         buffer = [
             int(i) * globals.config.save_every_pt
-            for i in list(map(plot_loss.index, heapq.nsmallest(best_n, plot_loss)))
+            for i in list(map(plot_loss.index, heapq.nsmallest(best_n, plot_loss))) if i != 0
         ]
 
         self.candidates = buffer[
