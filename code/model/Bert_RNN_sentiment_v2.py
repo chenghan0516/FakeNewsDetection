@@ -60,7 +60,7 @@ class BiGRU(nn.Module):
         sentiment_hidden = torch.zeros(2, 1, 128).to(device)
 
         # GRU
-        s_embed, _ = self.sentiment_embed(cls_vector, sentiment_hidden)
+        s_embed = self.sentiment_embed(cls_vector, sentiment_hidden)
         _, hidden = self.gru(cls_vector)
         hidden = torch.cat((hidden[-1], s_embed.to(device)))
 
