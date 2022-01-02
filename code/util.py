@@ -184,7 +184,7 @@ def create_desired_model():
         if globals.config.model_type == "rnn":
             if globals.config.with_sentiment:
                 print("import model Bert-rnn with sentiment")
-                from model.Bert_RNN_sentiment_v1 import FakeNewsDetection
+                from model.Bert_RNN_sentiment_v2 import FakeNewsDetection
                 return FakeNewsDetection().to(globals.device)
             else:
                 print("import model Bert-rnn")
