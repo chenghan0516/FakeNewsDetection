@@ -4,8 +4,8 @@ import torch.nn.functional as F
 from transformers import BertModel
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-GRU_HIDDEN_SIZE = 128
 SENT_EMBED_SIZE = 16
+GRU_HIDDEN_SIZE = 128
 
 
 class Sentiment(nn.Module):
@@ -78,9 +78,9 @@ class FakeNewsDetection(nn.Module):
 
     def forward(self, titles, title_mask, texts, text_mask):
         count = 0
-        titleEmbed = torch.zeros(GRU_HIDDEN_SIZE).to(device)
-        textEmbed = torch.zeros(GRU_HIDDEN_SIZE).to(device)
-        newsEmbed = torch.zeros(GRU_HIDDEN_SIZE).to(device)
+        titleEmbed = torch.zeros(GRU_HIDDEN_SIZE+SENT_EMBED_SIZE).to(device)
+        textEmbed = torch.zeros(GRU_HIDDEN_SIZE+SENT_EMBED_SIZE).to(device)
+        newsEmbed = torch.zeros(GRU_HIDDEN_SIZE+SENT_EMBED_SIZE).to(device)
         if len(titles) != 0:
             titleEmbed = self.myEmbed(titles, title_mask)
             count += 1
