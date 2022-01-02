@@ -62,7 +62,7 @@ class BiGRU(nn.Module):
         # GRU
         s_embed = self.sentiment_embed(cls_vector, sentiment_hidden)
         _, hidden = self.gru(cls_vector)
-        hidden = torch.cat((hidden[-1], s_embed.to(device)))
+        hidden = torch.cat((hidden[-1], s_embed.to(device)), dim=1)
 
         return hidden
 
@@ -71,7 +71,7 @@ class FakeNewsDetection(nn.Module):
     def __init__(self):
         super(FakeNewsDetection, self).__init__()
         self.myEmbed = BiGRU()
-        self.FC_1 = nn.Linear(GRU_HIDDEN_SIZE, 64)
+        self.FC_1 = nn.Linear(GRU_HIDDEN_SIZE+SENT_EMBED_SIZE, 64)
         self.FC_2 = nn.Linear(64, 16)
         self.FC_3 = nn.Linear(16, 1)
         self.Dropout = nn.Dropout(p=0.3)
