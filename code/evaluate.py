@@ -9,6 +9,7 @@ import json
 import time
 import util
 import matplotlib.pyplot as plt
+import pickle
 
 import heapq
 
@@ -186,7 +187,7 @@ class Evaluator:
             }
         )
 
-    def evaluate_model(self, eval_index, eval_pt):
+    def evaluate_model(self, eval_index, eval_pt, dump_ID):
         checkpoint = torch.load(
             "{}/fold_{}/FND_model_{}.pt".format(
                 globals.current_folder, self.progress_json["fold"], eval_pt)
@@ -196,11 +197,9 @@ class Evaluator:
         evaluate_core.set_total_length(len(eval_index))
 
         evaluate_core.start_time()
-
+        eval_result_ID = [[], []]
         for i in eval_index:
-
             cur_news_index = globals.random_index[i]
-
             predict, loss = evaluate_core.evaluate_iter(
                 self.token_data_read[cur_news_index][:4],
                 float(self.token_data_read[cur_news_index][4])
@@ -209,8 +208,14 @@ class Evaluator:
             evaluate_core.update_confusion_matrix(
                 self.token_data_read[cur_news_index][4], predict > 0.5)
 
+            eval_result_ID[int(predict > 0.5)].append(cur_news_index)
+
             evaluate_core.print_progress()
             evaluate_core.next_news()
+
+        if dump_ID:
+            with open('{}/fold_1/eval_result_ID.pickle'.format(globals.current_folder), 'wb') as f:
+                pickle.dump(eval_result_ID, f)
 
         avg_loss, accuracy, precision, recall, F1 = evaluate_core.confusion_matrix_process()
         return pd.DataFrame(
@@ -249,17 +254,28 @@ class Evaluator:
 
     def evaluate_candidates(self, eva_index):
         self.results_buffer_init()
-
         # 迭代候選節點
         for eval_pt in self.candidates:
             # evaluate error
             # 測試
-            result = self.evaluate_model(eva_index, eval_pt)
+            result = self.evaluate_model(eva_index, eval_pt, dump_ID=False)
             # 結果輸出+更新進度
             self.save_progress(result)
 
             self.results_buffer_append(result)
             self.next_candidate()
+        print(self.results_buffer)
+
+    def evaluate_specific_candidates(self, eva_index, eval_pt):
+        self.results_buffer_init()
+        # evaluate error
+        # 測試
+        result = self.evaluate_model(eva_index, eval_pt, dump_ID=True)
+        # 結果輸出+更新進度
+        self.save_progress(result)
+
+        self.results_buffer_append(result)
+        self.next_candidate()
         print(self.results_buffer)
 
 
@@ -275,8 +291,10 @@ def evaluate():
         evaluator.create_result_file()
         # 讀取loss並選出較好的節點
         evaluator.get_candidates()
-
         evaluator.evaluate_candidates(eva_index)
+
+        # 直接evaluate某節點
+        # evaluator.evaluate_specific_candidates(eva_index, 81000)
 
         evaluator.next_fold()
         evaluator.init_candidate()
